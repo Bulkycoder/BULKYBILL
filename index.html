@@ -28,11 +28,22 @@
             color: #333;
         }
 
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
         input {
             width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
             box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+            color: #333;
+            outline: none;
         }
 
         table {
@@ -133,7 +144,6 @@
                     <th>Quantity</th>
                     <th>Price (INR)</th>
                     <th>Sub Total (INR)</th>
-                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -144,13 +154,13 @@
         <div class="total-section">
             <p><strong>Grand Total (INR):</strong> <span id="grandTotal">0.00</span></p>
         </div>
+    </div>
 
-        <div class="buttons-section">
-            <button onclick="addItem()">Add Item</button>
-            <button onclick="removeItem()">Remove Item</button>
-            <button onclick="calculateTotal()">Calculate Total</button>
-            <button onclick="saveAsImage()">Save as Image</button>
-        </div>
+    <div class="buttons-section">
+        <button onclick="addItem()">Add Item</button>
+        <button onclick="removeItem()">Remove Item</button>
+        <button onclick="calculateTotal()">Calculate Total</button>
+        <button onclick="saveAsImage()">Save as Image</button>
     </div>
 
     <script>
@@ -167,43 +177,24 @@
             const cellQuantity = newRow.insertCell(2);
             const cellPrice = newRow.insertCell(3);
             const cellSubTotal = newRow.insertCell(4);
-            const cellAction = newRow.insertCell(5);
 
             cellSrNo.innerHTML = itemCount;
             cellItem.innerHTML = `<input type="text" name="itemName${itemCount}" required>`;
             cellQuantity.innerHTML = `<input type="number" name="quantity${itemCount}" min="1" value="1" required>`;
             cellPrice.innerHTML = `<input type="number" name="price${itemCount}" min="0.01" step="0.01" required>`;
             cellSubTotal.innerHTML = '0.00';
-            cellAction.innerHTML = `<button type="button" onclick="removeItem(${itemCount})">Remove</button>`;
 
             updateTotal();
         }
 
-        function removeItem(itemNumber) {
+        function removeItem() {
             const itemsTableBody = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
             const rows = itemsTableBody.getElementsByTagName('tr');
 
-            for (let i = 0; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName('td');
-                const srNo = parseInt(cells[0].innerText);
-
-                if (srNo === itemNumber) {
-                    itemsTableBody.deleteRow(i);
-                    itemCount--;
-                    updateSrNumbers();
-                    updateTotal();
-                    break;
-                }
-            }
-        }
-
-        function updateSrNumbers() {
-            const itemsTableBody = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
-            const rows = itemsTableBody.getElementsByTagName('tr');
-
-            for (let i = 0; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName('td');
-                cells[0].innerText = i + 1;
+            if (itemCount > 0) {
+                itemsTableBody.deleteRow(itemCount - 1);
+                itemCount--;
+                updateTotal();
             }
         }
 
@@ -230,22 +221,19 @@
 
         function saveAsImage() {
             const element = document.getElementById('bill-container');
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
 
-            canvas.width = element.offsetWidth;
-            canvas.height = element.offsetHeight;
+            // Temporarily hide buttons
+            const buttonsSection = document.querySelector('.buttons-section');
+            buttonsSection.style.display = 'none';
 
-            const options = { scale: 2 };
-
-            html2canvas(element, options).then(canvas => {
-                context.drawImage(canvas, 0, 0);
-
-                const imageData = canvas.toDataURL('image/jpeg');
+            html2canvas(element).then(canvas => {
                 const link = document.createElement('a');
-                link.href = imageData;
-                link.download = 'bill.jpeg';
+                link.href = canvas.toDataURL('image/png');
+                link.download = 'bill.png';
                 link.click();
+
+                // Show buttons again
+                buttonsSection.style.display = 'flex';
             });
         }
     </script>
