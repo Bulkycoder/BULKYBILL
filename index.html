@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Generator</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .bill-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .total-section {
+            text-align: right;
+        }
+
+        .buttons-section {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="bill-container" id="bill-container">
+        <h1>BLINK BILL</h1>
+
+        <div class="input-section">
+            <label for="companyName">Company Name:</label>
+            <input type="text" id="companyName">
+
+            <div class="customer-details">
+                <div class="customer-column">
+                    <label for="customerName">Customer Name:</label>
+                    <input type="text" id="customerName">
+                </div>
+                <div class="customer-column">
+                    <label for="customerAddress">Address:</label>
+                    <input type="text" id="customerAddress">
+                </div>
+                <div class="customer-column">
+                    <label for="customerPhone">Phone:</label>
+                    <input type="tel" id="customerPhone">
+                </div>
+            </div>
+
+            <div class="customer-details">
+                <div class="customer-column">
+                    <label for="invoiceNo">Invoice No:</label>
+                    <input type="text" id="invoiceNo">
+                </div>
+                <div class="customer-column">
+                    <label for="invoiceDate">Date:</label>
+                    <input type="date" id="invoiceDate">
+                </div>
+            </div>
+        </div>
+
+        <table id="itemsTable">
+            <thead>
+                <tr>
+                    <th>Sr. No</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Price (INR)</th>
+                    <th>Sub Total (INR)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dynamically add rows for items -->
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <p><strong>Grand Total (INR):</strong> <span id="grandTotal">0.00</span></p>
+        </div>
+
+        <div class="buttons-section">
+            <button onclick="addItem()">Add Item</button>
+            <button onclick="removeItem()">Remove Item</button>
+            <button onclick="calculateTotal()">Calculate Total</button>
+            <button onclick="saveAsImage()">Save as Image</button>
+            <button onclick="shareOnWhatsApp()">Share on WhatsApp</button>
+        </div>
+    </div>
+
+    <script>
+        let itemCount = 0;
+
+        function addItem() {
+            itemCount++;
+
+            const itemsTableBody = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+            const newRow = itemsTableBody.insertRow();
+
+            const cellSrNo = newRow.insertCell(0);
+            const cellItem = newRow.insertCell(1);
+            const cellQuantity = newRow.insertCell(2);
+            const cellPrice = newRow.insertCell(3);
+            const cellSubTotal = newRow.insertCell(4);
+            const cellAction = newRow.insertCell(5);
+
+            cellSrNo.innerHTML = itemCount;
+            cellItem.innerHTML = `<input type="text" name="itemName${itemCount}" required>`;
+            cellQuantity.innerHTML = `<input type="number" name="quantity${itemCount}" min="1" value="1" required>`;
+            cellPrice.innerHTML = `<input type="number" name="price${itemCount}" min="0.01" step="0.01" required>`;
+            cellSubTotal.innerHTML = '0.00';
+            cellAction.innerHTML = `<button type="button" onclick="removeItem(${itemCount})">Remove</button>`;
+
+            updateTotal();
+        }
+
+        function removeItem(itemNumber) {
+            const itemsTableBody = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+            const rows = itemsTableBody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                const srNo = parseInt(cells[0].innerText);
+
+                if (srNo === itemNumber) {
+                    itemsTableBody.deleteRow(i);
+                    itemCount--;
+                    updateSrNumbers();
+                    updateTotal();
+                    break;
+                }
+            }
+        }
+
+        function updateSrNumbers() {
+            const itemsTableBody = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+            const rows = itemsTableBody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                cells[0].innerText = i + 1;
+            }
+        }
+
+        function updateTotal() {
+            const itemsTableBody = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+            const rows = itemsTableBody.getElementsByTagName('tr');
+            let total = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                const quantity = parseInt(cells[2].getElementsByTagName('input')[0].value);
+                const price = parseFloat(cells[3].getElementsByTagName('input')[0].value);
+                const subTotal = quantity * price;
+                cells[4].innerText = subTotal.toFixed(2);
+                total += subTotal;
+            }
+
+            document.getElementById('grandTotal').innerText = total.toFixed(2);
+        }
+
+        function calculateTotal() {
+            updateTotal();
+        }
+
+        function saveAsImage() {
+            const element = document.getElementById('bill-container');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = element.offsetWidth;
+            canvas.height = element.offsetHeight;
+
+            const options = { scale: 2 };
+
+            html2canvas(element, options).then(canvas => {
+                context.drawImage(canvas, 0, 0);
+
+                const imageData = canvas.toDataURL('image/jpeg');
+                const link = document.createElement('a');
+                link.href = imageData;
+                link.download = 'bill.jpeg';
+                link.click();
+            });
+        }
+
+        function shareOnWhatsApp() {
+            // Implement the logic to share the image on WhatsApp
+            // This could involve creating a shareable link to the image file.
+            // For simplicity, this example does not include WhatsApp sharing.
+            alert('WhatsApp sharing functionality not implemented in this example.');
+        }
+    </script>
+</body>
+</html>
